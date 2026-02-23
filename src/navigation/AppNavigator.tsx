@@ -7,8 +7,9 @@ import ReportScreen from "../screens/ReportScreen";
 
 export type RootStackParamList = {
   Agenda: undefined;
-  CheckIn: undefined;
-  Map: undefined;
+  CheckIn: { siteId: string };
+  //Map: undefined;
+  Map: { site: any };
   Report: undefined;
 };
 
