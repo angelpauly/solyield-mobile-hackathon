@@ -5,7 +5,7 @@ Level 1 - Solar Field Operations
 ## 🚀 Overview
 SolYield is a high-performance mobile application designed for solar plant technicians. It streamlines the inspection process by combining GPS verified check-ins, interactive site navigation, and dynamic PDF reporting with real-time performance analytics.
 
-## ✨ Features (Level 1 Requirements)
+##  Features (Level 1 Requirements)
 
 ### 🗓️ 1.1 The Day's Agenda
 - Implemented a **"My Visits"** screen providing a unified view of the technician's daily schedule.
