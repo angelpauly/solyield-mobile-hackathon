@@ -1,260 +1,194 @@
 import React, { useState } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-  Alert,
+import { 
+  View, 
+  Text, 
+  TextInput, 
+  StyleSheet, 
+  TouchableOpacity, 
+  ScrollView, 
+  Alert, 
+  Image 
 } from "react-native";
-import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { RootStackParamList } from "../navigation/AppNavigator";
+import * as ImagePicker from 'expo-image-picker';
 import { saveReport } from "../utils/reportStorage";
-import { Report } from "../types/report";
 import { colors } from "../theme/colors";
+import { Report } from "../types/report"; // Importing the type to ensure compatibility
 
-type Props = NativeStackScreenProps<RootStackParamList, "Report">;
-
-export default function ReportScreen({ route, navigation }: Props) {
+export default function ReportScreen({ route, navigation }: any) {
   const { site } = route.params;
-
   const [energyGenerated, setEnergyGenerated] = useState("");
-  const [inverterStatus, setInverterStatus] =
-    useState<Report["inverterStatus"]>("Operational");
-  const [panelCondition, setPanelCondition] =
-    useState<Report["panelCondition"]>("Good");
-  const [issueType, setIssueType] =
-    useState<Report["issueType"]>("None");
   const [notes, setNotes] = useState("");
+  const [photo, setPhoto] = useState<string | null>(null);
 
-  const handleSubmit = async () => {
-    if (!energyGenerated) {
-      Alert.alert("Validation", "Please enter energy generated.");
+  const takePhoto = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert("Permission Denied", "We need camera access to document issues.");
       return;
     }
 
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 0.7,
+    });
+
+    if (!result.canceled) {
+      setPhoto(result.assets[0].uri);
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!energyGenerated) {
+      Alert.alert("Validation Error", "Please enter the energy generated value.");
+      return;
+    }
+
+    // Creating the report object to perfectly match the 'Report' type
     const newReport: Report = {
       id: Date.now().toString(),
       siteId: site.id,
       siteName: site.name,
       date: new Date().toISOString(),
       energyGenerated: Number(energyGenerated),
-      inverterStatus,
-      panelCondition,
-      issueType,
-      notes,
-      locationVerified: true,
+      inverterStatus: "Operational", // Default required field
+      panelCondition: photo ? "Damaged" : "Good", // Logic based on if a photo was taken
+      issueType: "None", // Default required field
+      notes: notes,
+      locationVerified: true, // Set to true as they passed the CheckIn screen
     };
 
-    await saveReport(newReport);
-
-    Alert.alert("Success", "Report submitted successfully.");
-    navigation.navigate("Agenda");
+    try {
+      await saveReport(newReport);
+      Alert.alert(
+        "Report Submitted", 
+        "Data has been saved locally. It will sync when you're back online.",
+        [{ text: "OK", onPress: () => navigation.popToTop() }]
+      );
+    } catch (error) {
+      Alert.alert("Error", "Failed to save the report locally.");
+    }
   };
 
   return (
-    <ScrollView
-      style={{ backgroundColor: colors.background }}
-      contentContainerStyle={styles.container}
-    >
-      <Text style={styles.title}>Field Inspection Report</Text>
-
-      {/* Site Info Card */}
+    <ScrollView style={styles.background} contentContainerStyle={styles.container}>
+      <Text style={styles.header}>Field Inspection Report</Text>
+      <Text style={styles.siteLabel}>Site: {site.name}</Text>
+      
       <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Site Information</Text>
-
-        <Text style={styles.label}>Site Name</Text>
-        <Text style={styles.readOnly}>{site.name}</Text>
-
-        <Text style={styles.label}>Date</Text>
-        <Text style={styles.readOnly}>
-          {new Date().toLocaleDateString()}
-        </Text>
-      </View>
-
-      {/* Performance Card */}
-      <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Performance Metrics</Text>
-
         <Text style={styles.label}>Energy Generated (kWh)</Text>
-        <TextInput
-          style={styles.input}
+        <TextInput 
+          style={styles.input} 
+          placeholder="e.g. 450.5" 
           keyboardType="numeric"
           value={energyGenerated}
           onChangeText={setEnergyGenerated}
-          placeholder="Enter energy generated"
         />
 
-        <Text style={styles.label}>Inverter Status</Text>
-        {["Operational", "Minor Fault", "Critical Fault"].map((status) => (
-          <TouchableOpacity
-            key={status}
-            style={[
-              styles.option,
-              inverterStatus === status && styles.selected,
-            ]}
-            onPress={() =>
-              setInverterStatus(status as Report["inverterStatus"])
-            }
-          >
-            <Text
-              style={
-                inverterStatus === status
-                  ? styles.selectedText
-                  : styles.optionText
-              }
-            >
-              {status}
-            </Text>
-          </TouchableOpacity>
-        ))}
+        <Text style={styles.label}>Visual Evidence</Text>
+        <TouchableOpacity style={styles.photoButton} onPress={takePhoto}>
+          <Text style={styles.photoButtonText}>
+            {photo ? "📸 Change Photo" : "📸 Take Photo of Issue"}
+          </Text>
+        </TouchableOpacity>
+        
+        {photo && (
+          <Image source={{ uri: photo }} style={styles.previewImage} />
+        )}
 
-        <Text style={styles.label}>Panel Condition</Text>
-        {["Good", "Dusty", "Damaged"].map((condition) => (
-          <TouchableOpacity
-            key={condition}
-            style={[
-              styles.option,
-              panelCondition === condition && styles.selected,
-            ]}
-            onPress={() =>
-              setPanelCondition(condition as Report["panelCondition"])
-            }
-          >
-            <Text
-              style={
-                panelCondition === condition
-                  ? styles.selectedText
-                  : styles.optionText
-              }
-            >
-              {condition}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      {/* Issues Card */}
-      <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Issue Assessment</Text>
-
-        {[
-          "None",
-          "Cleaning Required",
-          "Electrical Fault",
-          "Structural Issue",
-        ].map((issue) => (
-          <TouchableOpacity
-            key={issue}
-            style={[
-              styles.option,
-              issueType === issue && styles.selected,
-            ]}
-            onPress={() =>
-              setIssueType(issue as Report["issueType"])
-            }
-          >
-            <Text
-              style={
-                issueType === issue
-                  ? styles.selectedText
-                  : styles.optionText
-              }
-            >
-              {issue}
-            </Text>
-          </TouchableOpacity>
-        ))}
-
-        <Text style={styles.label}>Observations</Text>
-        <TextInput
-          style={[styles.input, { height: 100 }]}
+        <Text style={styles.label}>Observations & Notes</Text>
+        <TextInput 
+          style={[styles.input, styles.textArea]} 
+          placeholder="Describe any anomalies or cleaning requirements..." 
           multiline
+          numberOfLines={4}
           value={notes}
           onChangeText={setNotes}
-          placeholder="Enter inspection notes"
         />
       </View>
 
-      <TouchableOpacity style={styles.button} onPress={handleSubmit}>
-        <Text style={styles.buttonText}>Submit Report</Text>
+      <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
+        <Text style={styles.submitButtonText}>Submit Offline Report</Text>
       </TouchableOpacity>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    padding: 20,
+  background: {
+    backgroundColor: colors.background,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
+  container: { 
+    padding: 20 
+  },
+  header: { 
+    fontSize: 24, 
+    fontWeight: 'bold', 
+    color: colors.primary,
+    marginBottom: 5 
+  },
+  siteLabel: {
+    fontSize: 16,
+    color: colors.textSecondary,
     marginBottom: 20,
-    color: colors.textPrimary,
   },
   card: {
-    backgroundColor: colors.card,
-    padding: 18,
-    borderRadius: 14,
-    marginBottom: 18,
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
+    backgroundColor: '#fff',
+    padding: 15,
+    borderRadius: 12,
     elevation: 3,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    marginBottom: 12,
-    color: colors.primary,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   label: {
-    marginTop: 12,
-    fontWeight: "600",
+    fontWeight: '600',
+    marginBottom: 8,
     color: colors.textPrimary,
   },
-  readOnly: {
-    marginTop: 4,
-    color: colors.textSecondary,
+  input: { 
+    borderWidth: 1, 
+    borderColor: colors.border, 
+    padding: 12, 
+    borderRadius: 8, 
+    marginBottom: 20,
+    backgroundColor: '#FAFAFA'
   },
-  input: {
+  textArea: {
+    height: 100,
+    textAlignVertical: 'top',
+  },
+  photoButton: { 
+    backgroundColor: colors.primaryLight, 
+    padding: 12, 
+    borderRadius: 8, 
+    alignItems: 'center', 
+    marginBottom: 10,
     borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 10,
-    padding: 12,
-    marginTop: 6,
-    backgroundColor: "#fff",
-  },
-  option: {
-    padding: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 10,
-    marginTop: 8,
-  },
-  optionText: {
-    color: colors.textPrimary,
-  },
-  selected: {
-    backgroundColor: colors.primaryLight,
     borderColor: colors.primary,
+    borderStyle: 'dashed',
   },
-  selectedText: {
+  photoButtonText: {
     color: colors.primary,
-    fontWeight: "600",
+    fontWeight: 'bold',
   },
-  button: {
-    marginTop: 10,
-    backgroundColor: colors.primary,
-    padding: 16,
-    borderRadius: 12,
-    alignItems: "center",
+  previewImage: {
+    width: '100%',
+    height: 200,
+    borderRadius: 8,
+    marginBottom: 20,
   },
-  buttonText: {
-    color: "#fff",
-    fontWeight: "bold",
-    fontSize: 16,
+  submitButton: { 
+    backgroundColor: colors.success, 
+    padding: 18, 
+    borderRadius: 12, 
+    alignItems: 'center',
+    marginTop: 20,
   },
+  submitButtonText: { 
+    color: '#fff', 
+    fontWeight: 'bold',
+    fontSize: 16 
+  }
 });
