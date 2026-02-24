@@ -1,11 +1,11 @@
 # SolYield - Field Inspection & Analytics Platform
- 
-Level 1 - Solar Field Operations
+
+ Level 1 - Solar Field Operations
 
 ## 🚀 Overview
-SolYield is a high-performance mobile application designed for solar plant technicians. It streamlines the inspection process by combining GPS verified check-ins, interactive site navigation, and dynamic PDF reporting with real-time performance analytics.
+SolYield is a high-performance mobile application designed for solar plant technicians. It streamlines the inspection process by combining GPS-verified check-ins, interactive site navigation, and dynamic PDF reporting with real-time performance analytics.
 
-##  Features (Level 1 Requirements)
+## ✨ Features (Level 1 Requirements)
 
 ### 🗓️ 1.1 The Day's Agenda
 - Implemented a **"My Visits"** screen providing a unified view of the technician's daily schedule.
@@ -27,7 +27,7 @@ SolYield is a high-performance mobile application designed for solar plant techn
 - **Digital Evidence:** Embeds inspection photos directly into the PDF using Base64 encoding.
 - **Technician Identity:** All reports are digitally signed and timestamped by **Angel**.
 
-
+---
 
 ## 🛠️ Technical Stack
 - **Framework:** React Native / Expo
@@ -36,7 +36,7 @@ SolYield is a high-performance mobile application designed for solar plant techn
 - **Persistence:** AsyncStorage (Offline-First)
 - **Tooling:** `expo-print`, `expo-sharing`, `expo-location`, `react-native-maps`
 
-
+---
 
 ## ⚙️ Setup & Installation
 To run this project locally, ensure you have the [Expo Go](https://expo.dev/go) app on your mobile device.
