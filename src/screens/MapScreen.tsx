@@ -4,12 +4,14 @@ import {
   StyleSheet,
   ActivityIndicator,
   Text,
+  TouchableOpacity,
 } from "react-native";
 import MapView, { Marker, Callout } from "react-native-maps";
 import * as Location from "expo-location";
 import * as Linking from "expo-linking";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/AppNavigator";
+import { colors } from "../theme/colors";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Map">;
 
@@ -18,7 +20,7 @@ type Coordinates = {
   longitude: number;
 };
 
-export default function MapScreen({ route }: Props) {
+export default function MapScreen({ route, navigation }: Props) {
   const { site } = route.params;
 
   const [userLocation, setUserLocation] = useState<Coordinates | null>(null);
@@ -41,7 +43,7 @@ export default function MapScreen({ route }: Props) {
   if (!userLocation) {
     return (
       <View style={styles.loader}>
-        <ActivityIndicator size="large" />
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
@@ -58,40 +60,48 @@ export default function MapScreen({ route }: Props) {
   };
 
   return (
-    <MapView
-      style={StyleSheet.absoluteFillObject}
-      initialRegion={{
-        latitude: midLatitude,
-        longitude: midLongitude,
-        latitudeDelta: 0.02,
-        longitudeDelta: 0.02,
-      }}
-    >
-      {/* User Marker */}
-      <Marker
-        coordinate={userLocation}
-        title="You"
-        pinColor="blue"
-      />
-
-      {/* Site Marker with Callout */}
-      <Marker
-        coordinate={{
-          latitude: site.location.lat,
-          longitude: site.location.lng,
+    <View style={{ flex: 1 }}>
+      <MapView
+        style={StyleSheet.absoluteFillObject}
+        initialRegion={{
+          latitude: midLatitude,
+          longitude: midLongitude,
+          latitudeDelta: 0.02,
+          longitudeDelta: 0.02,
         }}
-        pinColor="red"
       >
-        <Callout onPress={handleNavigate}>
-          <View style={styles.callout}>
-            <Text style={styles.siteName}>{site.name}</Text>
-            <Text style={styles.navigateText}>
-              Tap to Navigate
-            </Text>
-          </View>
-        </Callout>
-      </Marker>
-    </MapView>
+        <Marker coordinate={userLocation} pinColor={colors.primary} />
+
+        <Marker
+          coordinate={{
+            latitude: site.location.lat,
+            longitude: site.location.lng,
+          }}
+          pinColor={colors.danger}
+        >
+          <Callout onPress={handleNavigate}>
+            <View style={styles.callout}>
+              <Text style={styles.siteName}>{site.name}</Text>
+              <Text style={styles.navigateText}>
+                Tap to Open Navigation
+              </Text>
+            </View>
+          </Callout>
+        </Marker>
+      </MapView>
+
+      {/* Bottom Card */}
+      <View style={styles.bottomCard}>
+        <Text style={styles.siteTitle}>{site.name}</Text>
+
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => navigation.navigate("Report", { site })}
+        >
+          <Text style={styles.buttonText}>Proceed to Inspection</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
   );
 }
 
@@ -102,13 +112,42 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   callout: {
-    width: 160,
+    width: 180,
   },
   siteName: {
     fontWeight: "bold",
     marginBottom: 6,
   },
   navigateText: {
-    color: "blue",
+    color: colors.primary,
+  },
+  bottomCard: {
+    position: "absolute",
+    bottom: 20,
+    left: 20,
+    right: 20,
+    backgroundColor: colors.card,
+    padding: 18,
+    borderRadius: 14,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 5,
+  },
+  siteTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: 12,
+    color: colors.textPrimary,
+  },
+  button: {
+    backgroundColor: colors.primary,
+    padding: 14,
+    borderRadius: 10,
+    alignItems: "center",
+  },
+  buttonText: {
+    color: "#fff",
+    fontWeight: "bold",
   },
 });
