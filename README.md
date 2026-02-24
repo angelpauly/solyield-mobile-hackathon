@@ -1,8 +1,7 @@
 # SolYield - Field Inspection & Analytics Platform
 
-**Technician Lead:** Angel  
-**Project Scope:** Level 1 - Solar Field Operations
-
+ 
+Level 1 - Solar Field Operations
 
 
 ## 🚀 Overview
